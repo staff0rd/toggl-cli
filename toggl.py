@@ -809,13 +809,14 @@ class TimeEntryList(object):
         Force reloading time entry data from the server. Returns self for
         method chaining.
         """
+        timer = time.time()
         # Fetch time entries from 00:00:00 yesterday to 23:59:59 today.
         url = "%s/time_entries?start_date=%s&end_date=%s" % \
             (TOGGL_URL, urllib.parse.quote(DateAndTime().start_of_yesterday().isoformat('T')), \
             urllib.parse.quote(DateAndTime().last_minute_today().isoformat('T')))
         Logger.debug(url)
         entries = json.loads( toggl(url, 'get') )
-
+        
         # Build a list of entries.
         self.time_entries = []
         for entry in entries:
@@ -824,14 +825,21 @@ class TimeEntryList(object):
             Logger.debug('---')
             self.time_entries.append(te)
 
+        Logger.debug("Fetch: %ss" % (time.time() - timer))
+        timer = time.time()
+
         # Sort the list by start time.
         sorted(self.time_entries, key=lambda entry: entry.data['start'])
+
+        Logger.debug("Time sort: %ss" % (time.time() - timer))
+
         return self
 
     def __str__(self):
         """
         Returns a human-friendly list of recent time entries.
         """
+        timer = time.time()
         # Sort the time entries into buckets based on "Month Day" of the entry.
         days = { }
         for entry in self.time_entries:
@@ -849,6 +857,9 @@ class TimeEntryList(object):
                 s += str(entry) + "\n"
                 duration += entry.normalized_duration()
             s += "  (%s)\n" % DateAndTime().elapsed_time(int(duration))
+        
+        Logger.debug("Day sort: %ss" % (time.time() - timer))
+
         return s.rstrip() # strip trailing \n
     
 #----------------------------------------------------------------------------
