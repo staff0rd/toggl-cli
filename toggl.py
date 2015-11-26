@@ -431,6 +431,7 @@ class ProjectList(six.Iterator):
         """
         Fetches the list of projects from toggl.
         """
+        Logger.debug("Fetching projects")
         wid = None
         if workspace_name is not None:
             self.workspace = WorkspaceList().find_by_name(workspace_name)
@@ -848,17 +849,23 @@ class TimeEntryList(object):
                 days[start_time] = []
             days[start_time].append(entry)
 
+        Logger.debug("Month Day sort: %ss" % (time.time() - timer))
+        timer = time.time()
         # For each day, print the entries, and sum the times.
         s = ""
         for date in sorted(days.keys()):
             s += date + "\n"
             duration = 0
             for entry in days[date]:
+                elapsed = time.time()
                 s += str(entry) + "\n"
+                
                 duration += entry.normalized_duration()
+                            
             s += "  (%s)\n" % DateAndTime().elapsed_time(int(duration))
+
         
-        Logger.debug("Day sort: %ss" % (time.time() - timer))
+        Logger.debug("Day sum: %ss" % (time.time() - timer))
 
         return s.rstrip() # strip trailing \n
     
